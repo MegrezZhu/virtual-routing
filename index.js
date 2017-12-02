@@ -10,7 +10,7 @@ const config = require('./config');
 
 const { io, router } = context;
 
-const port = process.env.PORT || config.port;
+const port = Number(process.env.PORT) || config.port;
 
 startup() // start the application
   .catch(err => {
