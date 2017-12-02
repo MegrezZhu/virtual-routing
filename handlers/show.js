@@ -10,6 +10,11 @@ module.exports = (ctx, args) => {
         console.log(`\t${member.name} @ ${member.address} : ${member.port}`);
       }
       break;
+    case 'peer':
+      for (const peer of ctx.peers.values()) {
+        console.log(`\t${peer.info.name} @ ${peer.info.address} : ${peer.info.port}`);
+      }
+      break;
     default:
       throw new Error(`unknown "${what}"`);
   }

@@ -7,6 +7,6 @@ module.exports = ctx => {
         exit                      you know what it means
         -----------------------------------------------------
         connect                   connect to a peer router
-        show member               you know what it means
+        show member|peer          you know what it means
   `);
 };
