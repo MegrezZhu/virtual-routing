@@ -2,6 +2,7 @@ const assert = require('assert');
 const crypto = require('crypto');
 const parser = require('yargs-parser');
 const inq = require('inquirer');
+const chalk = require('chalk');
 
 const handlers = require('./handlers');
 const { context } = require('./lib');
@@ -37,6 +38,7 @@ async function promptName () {
 }
 
 async function handleInput (context, input) {
+  if (!input) return;
   const args = parser(input);
   const [command] = args._;
 
@@ -45,3 +47,8 @@ async function handleInput (context, input) {
 
   return handlers[command](context, args);
 }
+
+process.on('uncaughtException', err => {
+  console.error(chalk.bgRed('uncaughtException'));
+  console.error(err);
+});
