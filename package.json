@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "chalk": "^2.3.0",
+    "cross-env": "^5.1.1",
     "inquirer": "^4.0.1",
     "require-indexify": "^1.0.0",
     "yargs-parser": "^8.0.0"
