@@ -3,15 +3,25 @@ const assert = require('assert');
 
 const handlers = require('./handlers');
 const { context } = require('./lib');
+const config = require('./config');
 
 const { io, router } = context;
 
-startup(); // start the application
+const port = process.env.PORT || config.port;
+
+startup() // start the application
+  .catch(err => {
+    io.error(err.message);
+    process.exit(1);
+  });
 
 async function startup () {
-  console.log('---- use "help" to see more commands ----');
+  console.log(' ---- use "help" to see more commands ----');
   io.registInputHandler(handleInput);
-  io.run();
+
+  await router.listen(port);
+
+  await io.run();
 }
 
 async function handleInput (context, input) {
