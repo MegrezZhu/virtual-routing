@@ -1,0 +1,25 @@
+{
+  "name": "virtual-routing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "inquirer": "^4.0.1",
+    "require-indexify": "^1.0.0",
+    "yargs-parser": "^8.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.1.1",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.6.0",
+    "eslint-plugin-node": "^5.1.0",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1"
+  }
+}
