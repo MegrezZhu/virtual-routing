@@ -1,3 +1,4 @@
 module.exports = {
-  port: 23333
+  port: 23333,
+  algo: 'distributed-DV'
 };

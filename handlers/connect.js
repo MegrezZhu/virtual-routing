@@ -22,5 +22,5 @@ module.exports = async (ctx, args) => {
   ]);
 
   const { io, router } = ctx;
-  await router.connect(host, port);
+  await router.establish(host, port); // TODO add edge length
 };
