@@ -1,20 +1,44 @@
-const parser = require('yargs-parser');
 const assert = require('assert');
+const crypto = require('crypto');
+const parser = require('yargs-parser');
+const inq = require('inquirer');
+const chalk = require('chalk');
 
 const handlers = require('./handlers');
 const { context } = require('./lib');
+const config = require('./config');
 
 const { io, router } = context;
 
-startup(); // start the application
+const port = process.env.PORT || config.port;
+
+startup() // start the application
+  .catch(err => {
+    io.error(err.message);
+    process.exit(1);
+  });
 
 async function startup () {
-  console.log('---- use "help" to see more commands ----');
+  await promptName();
+  console.log(' ---- use "help" to see more commands ----');
   io.registInputHandler(handleInput);
-  io.run();
+
+  await router.listen(port);
+
+  await io.run();
+}
+
+async function promptName () {
+  const {name} = await inq.prompt([{
+    name: 'name',
+    message: 'your name',
+    default: crypto.randomBytes(3).toString('hex').toUpperCase()
+  }]);
+  context.name = name;
 }
 
 async function handleInput (context, input) {
+  if (!input) return;
   const args = parser(input);
   const [command] = args._;
 
@@ -23,3 +47,8 @@ async function handleInput (context, input) {
 
   return handlers[command](context, args);
 }
+
+process.on('uncaughtException', err => {
+  console.error(chalk.bgRed('uncaughtException'));
+  console.error(err);
+});
