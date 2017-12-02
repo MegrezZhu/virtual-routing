@@ -9,8 +9,9 @@ const { io, router } = context;
 startup(); // start the application
 
 async function startup () {
-  io.setInputHandler(handleInput);
-  io.println('\r---- use "help" to see more commands ----');
+  console.log('---- use "help" to see more commands ----');
+  io.registInputHandler(handleInput);
+  io.run();
 }
 
 async function handleInput (context, input) {

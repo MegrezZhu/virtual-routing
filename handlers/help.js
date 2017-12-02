@@ -1,6 +1,5 @@
 module.exports = ctx => {
-  const { io } = ctx;
-  io.println(`
+  console.log(`
     Commands:
         help              ouput commands infomation
         exit              you know what it means
