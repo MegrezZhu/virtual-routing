@@ -4,11 +4,10 @@ const parser = require('yargs-parser');
 const inq = require('inquirer');
 const chalk = require('chalk');
 
+const io = require('./lib/IOInterface');
+const router = require('./lib/Router');
 const handlers = require('./handlers');
-const { context } = require('./lib');
 const config = require('./config');
-
-const { io, router } = context;
 
 const port = Number(process.env.PORT) || config.port;
 
@@ -34,10 +33,10 @@ async function promptName () {
     message: 'your name',
     default: crypto.randomBytes(3).toString('hex').toUpperCase()
   }]);
-  context.name = name;
+  router.name = name;
 }
 
-async function handleInput (context, input) {
+async function handleInput (input) {
   if (!input) return;
   const args = parser(input);
   const [command] = args._;
@@ -45,7 +44,7 @@ async function handleInput (context, input) {
   assert(command, 'command required');
   assert(handlers[command], `command "${command}" not found`);
 
-  return handlers[command](context, args);
+  return handlers[command](args);
 }
 
 process.on('uncaughtException', err => {

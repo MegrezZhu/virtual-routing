@@ -1,7 +1,8 @@
 const config = require('../config');
 const inq = require('inquirer');
+const router = require('../lib/Router');
 
-module.exports = async (ctx, args) => {
+module.exports = async args => {
   const { host, port } = await inq.prompt([
     {
       name: 'host',
@@ -21,6 +22,5 @@ module.exports = async (ctx, args) => {
     }
   ]);
 
-  const { io, router } = ctx;
   await router.establish(host, port); // TODO add edge length
 };

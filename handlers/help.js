@@ -1,6 +1,4 @@
-const config = require('../config');
-
-module.exports = ctx => {
+module.exports = () => {
   console.log(`
     Commands:
         help                      ouput commands infomation
