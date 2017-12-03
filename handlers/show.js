@@ -6,13 +6,15 @@ module.exports = args => {
   assert(what, 'what do you want to show?');
   switch (what) {
     case 'nodes':
+      console.log('\tname');
       for (const node of router.nodes.values()) {
-        console.log(`\t${node}`);
+        console.log(`\t${node}${node === router.name ? '(you)' : ''}`);
       }
       break;
     case 'neighbors':
-      for (const neighbor of router.neighbors.keys()) {
-        console.log(`\t${neighbor}`);
+      console.log('\tname\tcost');
+      for (const neighbor of router.neighbors.values()) {
+        console.log(`\t${neighbor.info.name}\t${neighbor.info.cost}`);
       }
       break;
     default:

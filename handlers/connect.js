@@ -3,7 +3,7 @@ const inq = require('inquirer');
 const router = require('../lib/Router');
 
 module.exports = async args => {
-  const { host, port } = await inq.prompt([
+  const { host, port, cost } = await inq.prompt([
     {
       name: 'host',
       message: 'host',
@@ -19,8 +19,15 @@ module.exports = async args => {
         if (num >= 1 && num <= 65535) return true;
         else return `port must be a number between 1-65535`;
       }
+    },
+    {
+      name: 'cost',
+      message: 'cost',
+      validate: cost => {
+        return parseInt(cost) >= 0 ? true : 'cost must be positive';
+      }
     }
   ]);
 
-  await router.establish(host, port); // TODO add edge length
+  await router.connect(host, port, cost);
 };
