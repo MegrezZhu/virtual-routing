@@ -18,11 +18,11 @@ startup() // start the application
   });
 
 async function startup () {
-  await promptName();
+  const name = await promptName();
   console.log(' ---- use "help" to see more commands ----');
   io.registInputHandler(handleInput);
 
-  await router.listen(port);
+  await router.init(name, config.algo, port);
 
   await io.run();
 }
@@ -33,7 +33,7 @@ async function promptName () {
     message: 'your name',
     default: crypto.randomBytes(3).toString('hex').toUpperCase()
   }]);
-  router.name = name;
+  return name;
 }
 
 async function handleInput (input) {

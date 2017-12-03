@@ -5,6 +5,6 @@ module.exports = () => {
         exit                      you know what it means
         -----------------------------------------------------
         connect                   connect to a peer router
-        show member|peer          you know what it means
+        show nodes|neighbors      you know what it means
   `);
 };

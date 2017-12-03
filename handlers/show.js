@@ -5,15 +5,14 @@ module.exports = args => {
   const [, what] = args._;
   assert(what, 'what do you want to show?');
   switch (what) {
-    case 'member':
-      console.log(`\t${router.name} @ localhost : ${router.port} (you)`);
-      for (const member of router.members.values()) {
-        console.log(`\t${member.name} @ ${member.address} : ${member.port}`);
+    case 'nodes':
+      for (const node of router.nodes.values()) {
+        console.log(`\t${node}`);
       }
       break;
-    case 'peer':
-      for (const peer of router.peers.values()) {
-        console.log(`\t${peer.info.name} @ ${peer.info.address} : ${peer.info.port}`);
+    case 'neighbors':
+      for (const neighbor of router.neighbors.keys()) {
+        console.log(`\t${neighbor}`);
       }
       break;
     default:
