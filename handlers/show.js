@@ -1,18 +1,20 @@
 const assert = require('assert');
+const router = require('../lib/Router');
 
-module.exports = (ctx, args) => {
+module.exports = args => {
   const [, what] = args._;
   assert(what, 'what do you want to show?');
   switch (what) {
-    case 'member':
-      console.log(`\t${ctx.name} @ localhost : ${ctx.port} (you)`);
-      for (const member of ctx.members.values()) {
-        console.log(`\t${member.name} @ ${member.address} : ${member.port}`);
+    case 'nodes':
+      console.log('\tname');
+      for (const node of router.nodes.values()) {
+        console.log(`\t${node}${node === router.name ? '(you)' : ''}`);
       }
       break;
-    case 'peer':
-      for (const peer of ctx.peers.values()) {
-        console.log(`\t${peer.info.name} @ ${peer.info.address} : ${peer.info.port}`);
+    case 'neighbors':
+      console.log('\tname\tcost');
+      for (const neighbor of router.neighbors.values()) {
+        console.log(`\t${neighbor.info.name}\t${neighbor.info.cost}`);
       }
       break;
     default:
