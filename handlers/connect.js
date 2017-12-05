@@ -23,6 +23,7 @@ module.exports = async args => {
     {
       name: 'cost',
       message: 'cost',
+      default: Math.floor(Math.random() * 10) + 1, // rand [1 - 10]
       validate: cost => {
         return parseInt(cost) >= 0 ? true : 'cost must be positive';
       }
