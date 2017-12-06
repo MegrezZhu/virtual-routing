@@ -9,7 +9,7 @@ const router = require('./lib/Router');
 const handlers = require('./handlers');
 const config = require('./config');
 
-const port = Number(process.env.PORT) || config.port;
+const port = Number(process.env.PORT) || config.port || 0;
 
 startup() // start the application
   .catch(err => {
