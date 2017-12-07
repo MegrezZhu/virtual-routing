@@ -17,6 +17,12 @@ module.exports = args => {
         console.log(`\t${neighbor.info.name}\t${neighbor.info.cost}`);
       }
       break;
+    case 'route':
+      console.log(`\tname\tdistance\tnext_hop`);
+      for (const [name, { len, by }] of router.algo.route.routeInfo.entries()) {
+        console.log(`\t${name}\t${len}\t\t${by}`);
+      }
+      break;
     default:
       throw new Error(`unknown "${what}"`);
   }
