@@ -22,8 +22,7 @@ async function startup () {
   console.log(' ---- use "help" to see more commands ----');
   io.registInputHandler(handleInput);
 
-  const Algo = require(`./routing_algorithm/${config.algo}`);
-  await router.init(name, new Algo(router), port);
+  await router.init(name, config.algo, port);
 
   await io.run();
 }
