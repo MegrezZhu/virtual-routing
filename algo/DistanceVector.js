@@ -33,7 +33,10 @@ class DistanceVector extends Base {
       node.on(node.DISTANCE_VECTOR, vector => {
         require('../lib/IOInterface').result(`dv from ${node.info.name}: ${JSON.stringify(vector)}`); // FIXME: debug
         this.route.setVector(node.info.name, vector);
-        // TODO: add new nodes
+      });
+
+      node.on(node.EDGE_LENGTH_CHANGED, len => {
+        this.route.setEdge(node.info.name, len);
       });
     });
 
@@ -92,6 +95,15 @@ class Route extends EventEmitter {
     if (oldLength === length) return;
 
     this.edges.set(name, length);
+    this._calculate();
+  }
+
+  /**
+   *
+   * @param {String} name
+   */
+  deleteEdge (name) {
+    this.edges.delete(name);
     this._calculate();
   }
 
