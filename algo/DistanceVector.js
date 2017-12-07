@@ -31,7 +31,6 @@ class DistanceVector extends Base {
       this.route.setEdge(node.info.name, node.info.cost);
 
       node.on(node.DISTANCE_VECTOR, vector => {
-        console.log(node.DISTANCE_VECTOR);
         require('../lib/IOInterface').result(`dv from ${node.info.name}: ${JSON.stringify(vector)}`); // FIXME: debug
         this.route.setVector(node.info.name, vector);
         // TODO: add new nodes
@@ -66,7 +65,7 @@ class DistanceVector extends Base {
     for (const node of this.router.neighbors.values()) {
       node.send({
         type: node.DISTANCE_VECTOR,
-        content: this.route.createVectorTo(node)
+        content: this.route.createVectorTo(node.info.name)
       });
     }
   }
@@ -103,8 +102,8 @@ class Route extends EventEmitter {
    */
   setVector (name, vector) {
     if (vector instanceof Object) {
-      // plain Object to Map
-      vector = new Map(Array.from(Object.entries(vector)));
+      // plain Object to Map, converting "null" to "Infinity"
+      vector = new Map(Array.from(Object.entries(vector)).map(([name, len]) => ([name, len || Infinity])));
     }
 
     this.vectors.set(name, vector);
@@ -124,8 +123,8 @@ class Route extends EventEmitter {
       for (const [toName, len] of vector.entries()) {
         if (toName === this.name) continue;
 
-        const to = result.get(toName) || {len: Infinity};
-        if (len1 + len < to.len) {
+        const to = result.get(toName);
+        if (!to || len1 + len < to.len) {
           result.set(toName, {
             len: len1 + len,
             by: byName
@@ -173,8 +172,8 @@ class Route extends EventEmitter {
    */
   createVectorTo (name) {
     const result = {};
-    for (const [name, { len, by }] of this.routeInfo.entries()) {
-      result[name] = by === name ? Infinity : len;
+    for (const [_name, { len, by }] of this.routeInfo.entries()) {
+      result[_name] = by === name ? Infinity : len;
     }
     return result;
   }

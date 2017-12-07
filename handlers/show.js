@@ -7,8 +7,9 @@ module.exports = args => {
   switch (what) {
     case 'nodes':
       console.log('\tname');
-      for (const node of router.nodes.values()) {
-        console.log(`\t${node}${node === router.name ? '(you)' : ''}`);
+      console.log(`\t${router.name} (you)`);
+      for (const node of router.algo.route.routeInfo.keys()) {
+        console.log(`\t${node}`);
       }
       break;
     case 'neighbors':
@@ -20,7 +21,7 @@ module.exports = args => {
     case 'route':
       console.log(`\tname\tdistance\tnext_hop`);
       for (const [name, { len, by }] of router.algo.route.routeInfo.entries()) {
-        console.log(`\t${name}\t${len}\t\t${by}`);
+        console.log(`\t${name}\t${len === Infinity ? 'Inf' : len}\t\t${by}`);
       }
       break;
     default:
