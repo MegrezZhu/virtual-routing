@@ -25,10 +25,10 @@ module.exports = async args => {
       message: 'cost',
       default: Math.floor(Math.random() * 10) + 1, // rand [1 - 10]
       validate: cost => {
-        return parseInt(cost) >= 0 ? true : 'cost must be positive';
+        return Number(cost) >= 0 ? true : 'cost must be positive';
       }
     }
   ]);
 
-  await router.connect(host, port, cost);
+  await router.connect(host, port, Number(cost));
 };
