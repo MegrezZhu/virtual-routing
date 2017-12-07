@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events');
 const Base = require('./Base');
+const io = require('../lib/IOInterface');
 
 class DistanceVector extends Base {
   constructor (router) {
@@ -31,7 +32,7 @@ class DistanceVector extends Base {
       this.route.setEdge(node.info.name, node.info.cost);
 
       node.on(node.DISTANCE_VECTOR, vector => {
-        require('../lib/IOInterface').result(`dv from ${node.info.name}: ${JSON.stringify(vector)}`); // FIXME: debug
+        require('../lib/IOInterface').result(`dv from ${node.info.name}: ${JSON.stringify(vector)}`);
         this.route.setVector(node.info.name, vector);
       });
 
@@ -46,7 +47,7 @@ class DistanceVector extends Base {
     });
 
     this.route.on(Route.ROUTE_CHANGED, () => {
-      require('../lib/IOInterface').result(`route changed: ${JSON.stringify(Array.from(this.route.routeInfo, ([name, info]) => ({ name, info })))}`); // FIXME: debug
+      // require('../lib/IOInterface').result(`route changed: ${JSON.stringify(Array.from(this.route.routeInfo, ([name, info]) => ({ name, info })))}`);
       this._broadcastVector();
 
       // add nodes
@@ -145,8 +146,10 @@ class Route extends EventEmitter {
       }
     }
 
-    if (this._compare(this.routeInfo, result)) {
-      this.routeInfo = result;
+    const _result = new Map(Array.from(result.entries()).filter(([, {len}]) => len !== Infinity));
+
+    if (this._compare(this.routeInfo, _result)) {
+      this.routeInfo = _result;
       this.emit(Route.ROUTE_CHANGED);
     }
   }
@@ -154,11 +157,16 @@ class Route extends EventEmitter {
   /**
    * check any difference
    */
-  _compare (newRoute, oldRoute) {
+  _compare (oldRoute, newRoute) {
     // any deleted
+    let deleted = false;
     for (const name of oldRoute.keys()) {
-      if (!newRoute.get(name)) return true;
+      if (!newRoute.get(name)) {
+        io.error(`${name} disconnected.`);
+        deleted = true;
+      }
     }
+    if (deleted) return true;
 
     // any new name
     for (const name of newRoute.keys()) {
@@ -172,10 +180,6 @@ class Route extends EventEmitter {
     }
 
     return false;
-  }
-
-  _startGC () {
-    // TODO:
   }
 
   /**
