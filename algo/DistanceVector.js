@@ -16,10 +16,7 @@ class DistanceVector extends Base {
   init (router) {
     this.router = router;
 
-    // this.nodes = router.nodes;
     this.nodes = new Set();
-    // this.nodes.add(router.name);
-
     this.route = new Route(router.name);
 
     this._attachHooks();
@@ -50,7 +47,7 @@ class DistanceVector extends Base {
     });
 
     this.route.on(Route.ROUTE_CHANGED, () => {
-      io.result(`route changed: ${JSON.stringify(Array.from(this.route.routeInfo, ([name, info]) => ({ name, info })))}`);
+      // io.result(`route changed: ${JSON.stringify(Array.from(this.route.routeInfo, ([name, info]) => ({ name, info })))}`);
       this._broadcastVector();
 
       // add nodes
