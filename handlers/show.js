@@ -8,7 +8,7 @@ module.exports = args => {
     case 'nodes':
       console.log('\tname');
       console.log(`\t${router.name} (you)`);
-      for (const node of router.algo.route.routeInfo.keys()) {
+      for (const node of router.nodes) {
         console.log(`\t${node}`);
       }
       break;

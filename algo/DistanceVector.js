@@ -16,7 +16,7 @@ class DistanceVector extends Base {
   init (router) {
     this.router = router;
 
-    this.nodes = new Set();
+    this.nodes = router.nodes;
     this.route = new Route(router.name);
 
     this._attachHooks();
