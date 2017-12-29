@@ -1,6 +1,6 @@
 const config = require('../config');
 const inq = require('inquirer');
-const router = require('../lib/Router');
+const router = require('../lib/Router').getInstance();
 
 module.exports = async args => {
   const { host, port, cost } = await inq.prompt([

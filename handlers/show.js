@@ -1,5 +1,5 @@
 const assert = require('assert');
-const router = require('../lib/Router');
+const router = require('../lib/Router').getInstance();
 
 module.exports = args => {
   const [, what] = args._;
@@ -8,7 +8,7 @@ module.exports = args => {
     case 'nodes':
       console.log('\tname');
       console.log(`\t${router.name} (you)`);
-      for (const node of router.algo.route.routeInfo.keys()) {
+      for (const node of router.nodes) {
         console.log(`\t${node}`);
       }
       break;
@@ -20,8 +20,8 @@ module.exports = args => {
       break;
     case 'route':
       console.log(`\tname\tdistance\tnext_hop`);
-      for (const [name, { len, by }] of router.algo.route.routeInfo.entries()) {
-        console.log(`\t${name}\t${len === Infinity ? 'Inf' : len}\t\t${by}`);
+      for (const [name, { length, by }] of router.algo.route.routeInfo.entries()) {
+        console.log(`\t${name}\t${length === Infinity ? 'Inf' : length}\t\t${by}`);
       }
       break;
     default:

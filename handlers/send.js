@@ -1,5 +1,5 @@
 const inq = require('inquirer');
-const router = require('../lib/Router');
+const router = require('../lib/Router').getInstance();
 
 module.exports = async () => {
   const { name } = await inq.prompt([{

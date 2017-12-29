@@ -7,5 +7,6 @@ module.exports = () => {
         connect                             connect to a peer router
         show nodes|neighbors|route          you know what it means
         edge                                edit edge length ("Infinity" to down an edge)
+        send                                send data
   `);
 };

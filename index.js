@@ -5,7 +5,10 @@ const inq = require('inquirer');
 const chalk = require('chalk');
 
 const io = require('./lib/IOInterface');
-const router = require('./lib/Router');
+const Router = require('./lib/Router');
+const Message = require('./lib/Message');
+const router = Router.getInstance();
+const algorithms = require('./algo');
 const handlers = require('./handlers');
 const config = require('./config');
 
@@ -22,7 +25,15 @@ async function startup () {
   console.log(' ---- use "help" to see more commands ----');
   io.registInputHandler(handleInput);
 
-  await router.init(name, config.algo, port);
+  await router.init(name, port);
+  const Algo = algorithms[config.algo];
+  router.installAlgo(new Algo());
+
+  Message.init(name);
+
+  router.on(Router.ECHO, msg => {
+    io.result(`${chalk.green('[Message]')} ${msg.header.from}: ${msg.data.data}`);
+  });
 
   await io.run();
 }
