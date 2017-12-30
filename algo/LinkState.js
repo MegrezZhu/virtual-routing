@@ -1,7 +1,5 @@
 const Base = require('./Base');
 const Router = require('../lib/Router');
-const Node = require('../lib/Node');
-const Server = require('../lib/Server');
 const Message = require('../lib/Message');
 
 class LinkState extends Base {
@@ -12,11 +10,11 @@ class LinkState extends Base {
   }
   init (router) {
     this.router = router; // router instance
-    this.neighborTable = new Map(); // Map: name to Map (name to length)
+    this.linkState = new Map(); // Map: name to Map (name to length)
     this.routeTable = new Map(); // name to {length, by}
 
     // init with self
-    this.neighborTable.set(this.router.name, new Map(Array.from(this.router.neighbors.entries()).map(([name, node]) => [name, node.info.cost])));
+    this.linkState.set(this.router.name, new Map(Array.from(this.router.neighbors.entries()).map(([name, node]) => [name, node.info.cost])));
 
     this._attachHooks();
   }
@@ -25,26 +23,26 @@ class LinkState extends Base {
       // log
       console.log(`NEW_NEIGHBOR`);
       // log
-      this.neighborTable.get(this.router.name).set(node.info.name, node.info.cost);
+      this.linkState.get(this.router.name).set(node.info.name, node.info.cost);
       this.broadcastLinkState();
       this._calculate();
       node.on(Message.LINK_STATE, msg => {
         // log
         console.log(`New LS from ${msg.header.from}:`);
-        console.log(msg.data);
+        for (const one of msg.data) console.log(one);
         // log
-        const newMap = new Map(msg.data.linkState);
-        const oldMap = this.neighborTable.get(msg.data.name);
-        if (this._isChange(newMap, oldMap)) {
+        // 如果这个广播从来没有收到过
+        if (msg.header.path.indexOf(this.router.name) === msg.header.path.length - 1) {
           // log
-          console.log(`LinkState Change`);
-          this.neighborTable.set(msg.data.name, newMap);
+          console.log(`Accept LinkState`);
+          this._applyLinkState(msg.data);
+          // this.linkState.set(msg.header.from, new Map(msg.data));
           // log
-          this.broadcastLinkState(msg);
           this._deleteUnRefNode();
+          this.router.broadcast(msg);
           this._calculate();
           // log
-          console.log(this.neighborTable);
+          console.log('Link State: ', this.linkState);
           // log
         }
       });
@@ -53,38 +51,33 @@ class LinkState extends Base {
       // log
       console.log(`NEIGHBOR_GONE`);
       // log
-      this.neighborTable.get(this.router.name).delete(node.info.name);
-      this.neighborTable.delete(node.info.name);
-      this.broadcastLinkState();
+      this.linkState.get(this.router.name).delete(node.info.name);
+      this.linkState.delete(node.info.name);
       this._deleteUnRefNode();
+      this.broadcastLinkState();
       this._calculate();
     });
   }
   _calculate () {
-    console.log('计算开始');
-    console.log(this.router.nodes);
-
+    // 计算路由信息
     // 计算nodes
-    this.router.nodes = new Set(this.neighborTable.keys());
+    this.router.nodes = new Set(this.linkState.keys());
+    this.router.nodes.delete(this.router.name);
     console.log('计算结束');
-    console.log(this.router.nodes);
+    console.log('Nodes: ', this.router.nodes);
   }
   _deleteUnRefNode () {
-    console.log('删除开始');
-    console.log(this.neighborTable);
     // 所有记录过的节点
-    const keys = [...this.neighborTable.keys()];
+    const keys = [...this.linkState.keys()];
     // 所有被引用（有邻居）的节点
     const hasRef = [];
-    for (const val of this.neighborTable.values()) {
+    for (const val of this.linkState.values()) {
       hasRef.push(...val.keys());
     }
     // 如果有节点在记录中，但是已经没有邻居，则判断这个节点消失了
     const leaveNodes = new Set(keys.filter(x => !hasRef.includes(x)));
     leaveNodes.delete(this.router.name);
-    leaveNodes.forEach(node => this.neighborTable.delete(node));
-    console.log('删除结束');
-    console.log(this.neighborTable);
+    leaveNodes.forEach(node => this.linkState.delete(node));
   }
   _isChange (newMap, oldMap) {
     if (newMap === oldMap) return false;
@@ -102,18 +95,36 @@ class LinkState extends Base {
     }
     return false;
   }
-  broadcastLinkState (msg) {
+  broadcastLinkState () {
+    const result = [];
+    for (const [name, ls] of this.linkState) {
+      result.push({
+        name,
+        linkState: Array.from(ls.entries())
+      });
+    }
     // log
     console.log(`Broadcast LS:`);
-    console.log(msg ? msg.data : {
-      name: this.router.name,
-      linkState: Array.from(this.neighborTable.get(this.router.name).entries())
-    });
+    for (const one of result) console.log(one);
     // log
-    this.router.broadcast(msg || new Message(Message.LINK_STATE, null, {
-      name: this.router.name,
-      linkState: Array.from(this.neighborTable.get(this.router.name).entries())
-    }));
+    // this.router.broadcast(msg || new Message(Message.LINK_STATE, null, Array.from(this.linkState.get(this.router.name).entries())));
+    this.router.broadcast(new Message(Message.LINK_STATE, null, result));
+  }
+  _serializeLinkState () {
+    const result = [];
+    for (const [name, ls] of this.linkState) {
+      result.push({
+        name,
+        linkState: Array.from(ls.entries())
+      });
+    }
+    return result;
+  }
+  _applyLinkState (ls) {
+    for (const {name, linkState} of ls) {
+      if (name === this.router.name) continue;
+      this.linkState.set(name, new Map(linkState));
+    }
   }
 };
 
