@@ -1,5 +1,9 @@
 class AlgorithmBase {
-  install (router) {
+  constructor () {
+    this.name = 'Stub!';
+  }
+
+  init (router) {
     throw new Error('Stub!');
   }
 }
