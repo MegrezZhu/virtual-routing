@@ -20,7 +20,7 @@ module.exports = args => {
       break;
     case 'route':
       console.log(`\tname\tdistance\tnext_hop`);
-      for (const [name, { length, by }] of router.algo.route.routeInfo.entries()) {
+      for (const [name, { length, by }] of router.algo.getRoute().entries()) {
         console.log(`\t${name}\t${length === Infinity ? 'Inf' : length}\t\t${by}`);
       }
       break;

@@ -6,7 +6,7 @@ module.exports = async () => {
     name: 'name',
     message: 'to: ',
     validate: name => {
-      if (router.algo.route.routeInfo.has(name)) return true;
+      if (router.algo.getRoute().has(name)) return true;
       return `Route to ${name} not exists!`;
     }
   }]);

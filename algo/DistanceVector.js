@@ -7,7 +7,7 @@ const Server = require('../lib/Server');
 const io = require('../lib/IOInterface');
 
 class DistanceVector extends Base {
-  constructor (router) {
+  constructor () {
     super();
 
     this.name = 'DistanceVector';
@@ -15,7 +15,6 @@ class DistanceVector extends Base {
 
   init (router) {
     this.router = router;
-
     this.nodes = router.nodes;
     this.route = new Route(router.name);
 
@@ -23,6 +22,10 @@ class DistanceVector extends Base {
     this._startRegularBroadcast();
 
     return this;
+  }
+
+  getRoute () {
+    return this.route.routeInfo;
   }
 
   _attachHooks () {
