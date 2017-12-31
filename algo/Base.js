@@ -6,6 +6,10 @@ class AlgorithmBase {
   init (router) {
     throw new Error('Stub!');
   }
+
+  getRoute () {
+    throw new Error('Stub!');
+  }
 }
 
 module.exports = AlgorithmBase;

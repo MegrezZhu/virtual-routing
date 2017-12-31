@@ -18,39 +18,27 @@ class LinkState extends Base {
 
     this._attachHooks();
   }
+
+  getRoute () {
+    return this.routeTable;
+  }
+
   _attachHooks () {
     this.router.on(Router.NEW_NEIGHBOR, node => {
-      // log
-      console.log(`NEW_NEIGHBOR`);
-      // log
       this.linkState.get(this.router.name).set(node.info.name, node.info.cost);
       this.broadcastLinkState();
       this._calculate();
       node.on(Message.LINK_STATE, msg => {
-        // log
-        console.log(`New LS from ${msg.header.from}:`);
-        for (const one of msg.data) console.log(one);
-        // log
         // 如果这个广播从来没有收到过
         if (msg.header.path.indexOf(this.router.name) === msg.header.path.length - 1) {
-          // log
-          console.log(`Accept LinkState`);
           this._applyLinkState(msg.data);
-          // this.linkState.set(msg.header.from, new Map(msg.data));
-          // log
           this._deleteUnRefNode();
           this.router.broadcast(msg);
           this._calculate();
-          // log
-          console.log('Link State: ', this.linkState);
-          // log
         }
       });
     });
     this.router.on(Router.NEIGHBOR_GONE, node => {
-      // log
-      console.log(`NEIGHBOR_GONE`);
-      // log
       this.linkState.get(this.router.name).delete(node.info.name);
       this.linkState.delete(node.info.name);
       this._deleteUnRefNode();
@@ -59,12 +47,51 @@ class LinkState extends Base {
     });
   }
   _calculate () {
-    // 计算路由信息
     // 计算nodes
     this.router.nodes = new Set(this.linkState.keys());
     this.router.nodes.delete(this.router.name);
-    console.log('计算结束');
-    console.log('Nodes: ', this.router.nodes);
+
+    // 计算路由信息
+    const queue = new Set(this.router.nodes);
+    this.routeTable.clear();
+    let origin = this.router.name;
+    for (const name of queue) {
+      this.routeTable.set(name, {
+        length: Infinity,
+        by: null
+      });
+    }
+    for (const [name, length] of this.linkState.get(origin)) {
+      if (!queue.has(name)) return; // 链路状态不稳定
+      this.routeTable.set(name, {
+        length,
+        by: name
+      });
+    }
+    let n = 10;
+    while (queue.size && n--) {
+      // 找出最近的一个节点
+      let nearest = null;
+      let nearestCost = Infinity;
+      for (const name of queue) {
+        const length = this.routeTable.get(name).length;
+        if (length < nearestCost) {
+          nearestCost = length;
+          nearest = name;
+        }
+      }
+      queue.delete(nearest);
+      for (const [name, length] of this.linkState.get(nearest)) {
+        if (queue.has(name)) {
+          const direct = this.routeTable.get(name).length;
+          const bypass = this.routeTable.get(nearest).length + length;
+          this.routeTable.set(name, {
+            length: Math.min(direct, bypass),
+            by: bypass < direct ? nearest : name
+          });
+        }
+      }
+    }
   }
   _deleteUnRefNode () {
     // 所有记录过的节点
@@ -103,11 +130,6 @@ class LinkState extends Base {
         linkState: Array.from(ls.entries())
       });
     }
-    // log
-    console.log(`Broadcast LS:`);
-    for (const one of result) console.log(one);
-    // log
-    // this.router.broadcast(msg || new Message(Message.LINK_STATE, null, Array.from(this.linkState.get(this.router.name).entries())));
     this.router.broadcast(new Message(Message.LINK_STATE, null, result));
   }
   _serializeLinkState () {

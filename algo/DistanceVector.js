@@ -24,6 +24,10 @@ class DistanceVector extends Base {
     return this;
   }
 
+  getRoute () {
+    return this.route.routeInfo;
+  }
+
   _attachHooks () {
     this.router.on(Router.NEW_NEIGHBOR, node => {
       this.nodes.add(node.info.name);
