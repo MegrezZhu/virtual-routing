@@ -68,8 +68,7 @@ class LinkState extends Base {
         by: name
       });
     }
-    let n = 10;
-    while (queue.size && n--) {
+    while (queue.size) {
       // 找出最近的一个节点
       let nearest = null;
       let nearestCost = Infinity;
@@ -105,22 +104,6 @@ class LinkState extends Base {
     const leaveNodes = new Set(keys.filter(x => !hasRef.includes(x)));
     leaveNodes.delete(this.router.name);
     leaveNodes.forEach(node => this.linkState.delete(node));
-  }
-  _isChange (newMap, oldMap) {
-    if (newMap === oldMap) return false;
-    if (!newMap || !oldMap) return true;
-    const newMapKeys = Array.from(newMap.keys());
-    const oldMapKeys = Array.from(oldMap.keys());
-    const added = newMapKeys.filter(x => !oldMapKeys.includes(x));
-    if (added.length) return true;
-    const deleted = oldMapKeys.filter(x => !newMapKeys.includes(x));
-    if (deleted.length) return true;
-    for (const [key, value] of newMap) {
-      if (oldMap.get(key) !== value) {
-        return true;
-      }
-    }
-    return false;
   }
   broadcastLinkState () {
     const result = [];
