@@ -27,9 +27,9 @@ async function startup () {
 
   await router.init(name, port);
   const Algo = algorithms[config.algo];
-  router.installAlgo(new Algo());
+  await router.installAlgo(new Algo());
 
-  Message.init(name);
+  Message.init(router.name);
 
   router.on(Router.ECHO, msg => {
     io.result(`${chalk.green('[Message]')} ${msg.header.from}: ${msg.data.data}`);
