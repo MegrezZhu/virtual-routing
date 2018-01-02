@@ -59,9 +59,9 @@ class CentralizedLinkState extends Base {
       this.router.on(Router.NEW_NEIGHBOR, this._sendLinkStateToMaster.bind(this));
       this.router.on(Router.NEIGHBOR_GONE, this._sendLinkStateToMaster.bind(this));
       this.master.on(Message.ROUTE_UPDATE, msg => {
-        console.log('Route table update');
+        io.result('Route table updated');
         this.routeTable = new Map(msg.data);
-        console.log(this.routeTable);
+        // console.log(this.routeTable);
         this.router.nodes = new Set(this.routeTable.keys());
       });
     } else {
@@ -71,10 +71,11 @@ class CentralizedLinkState extends Base {
       server.removeAllListeners(Server.NEW_CONNECTION);
       server.on(Server.NEW_CONNECTION, async node => {
         node.on('close', () => {
+          io.result(`Node [${node.name}] leave`);
           this.nodes.delete(node);
-          io.result(`Node leave: ${node.name}`);
           this.linkState.delete(node.name);
-          this._deleteUnRefNode();
+          // this._deleteUnRefNode();
+          this._broadcastLinkState();
         });
         node.on('error', () => {});
         await new Promise((resolve, reject) => {
@@ -83,14 +84,17 @@ class CentralizedLinkState extends Base {
             resolve();
           });
         });
-        this.nodes.add(node);
-        io.result(`New node ${node.name}`);
+        io.result(`New node: ${node.name}`);
         node.on(Message.LINK_STATE, msg => {
-          console.log('LS from ', node.name);
-          console.log(new Map(msg.data));
-          this.linkState.set(node.name, new Map(msg.data));
-          console.log(this.linkState);
-          this._broadcastLinkState();
+          io.result(`Link state from ${node.name}`);
+          const oldMap = this.linkState.get(node.name);
+          const newMap = new Map(msg.data);
+          if (this._isLinkStateChange(oldMap, newMap)) {
+            io.result(`Link State Change`);
+            this.nodes.add(node);
+            this.linkState.set(node.name, new Map(msg.data));
+            this._broadcastLinkState();
+          }
         });
       });
     }
@@ -103,9 +107,7 @@ class CentralizedLinkState extends Base {
     this.master.send(new Message(Message.LINK_STATE, MASTER_NAME, ls));
   }
   _broadcastLinkState () {
-    // this._deleteUnRefNode();
     for (const node of this.nodes) {
-      console.log(node.name);
       const routeTable = new Map();
       // 计算nodes
       const nodes = new Set(this.linkState.keys());
@@ -113,7 +115,6 @@ class CentralizedLinkState extends Base {
 
       // 计算路由信息
       const queue = new Set(nodes);
-      routeTable.clear();
       let origin = node.name;
       for (const name of queue) {
         routeTable.set(name, {
@@ -139,6 +140,10 @@ class CentralizedLinkState extends Base {
             nearest = name;
           }
         }
+        if (!nearest) {
+          routeTable.clear();
+          break;
+        }
         queue.delete(nearest);
         for (const [name, length] of this.linkState.get(nearest)) {
           if (queue.has(name)) {
@@ -151,9 +156,13 @@ class CentralizedLinkState extends Base {
           }
         }
       }
-      console.log(routeTable);
       node.send(new Message(Message.ROUTE_UPDATE, node.info.name, Array.from(routeTable)));
+      if (!routeTable.size) {
+        this.nodes.delete(node);
+        this.linkState.delete(node.name);
+      }
     }
+    io.result('Update route table');
   }
   _deleteUnRefNode () {
     // 所有记录过的节点
@@ -163,10 +172,23 @@ class CentralizedLinkState extends Base {
     for (const val of this.linkState.values()) {
       hasRef.push(...val.keys());
     }
-    // 如果有节点在记录中，但是已经没有邻居，则判断这个节点消失了
+    // 如果有节点在记录中，但是已经不是任何人的邻居，则判断这个节点消失了
     const leaveNodes = new Set(keys.filter(x => !hasRef.includes(x)));
-    leaveNodes.delete(this.router.name);
     leaveNodes.forEach(node => this.linkState.delete(node));
+  }
+  _isLinkStateChange (oldMap, newMap) {
+    if (oldMap === newMap) return false;
+    if (!oldMap || !newMap) return true;
+    if (Array.from(oldMap.keys()).filter(x => !newMap.has(x)).length) {
+      return true;
+    }
+    if (Array.from(newMap.keys()).filter(x => !oldMap.has(x)).length) {
+      return true;
+    }
+    for (const [key, value] of oldMap) {
+      if (newMap.get(key) !== value) return true;
+    }
+    return false;
   }
 }
 
