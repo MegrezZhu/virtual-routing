@@ -119,16 +119,17 @@ class CentralizedLinkState extends Base {
       for (const name of queue) {
         routeTable.set(name, {
           length: Infinity,
-          by: null
+          prev: null
         });
       }
       for (const [name, length] of this.linkState.get(origin)) {
-        if (!queue.has(name)) return console.log('链路状态不稳定'); // 链路状态不稳定
+        if (!queue.has(name)) return io.error('Unstable links, cancel broadcast');
         routeTable.set(name, {
           length,
-          by: name
+          prev: node.name
         });
       }
+
       while (queue.size) {
         // 找出最近的一个节点
         let nearest = null;
@@ -149,12 +150,26 @@ class CentralizedLinkState extends Base {
           if (queue.has(name)) {
             const direct = routeTable.get(name).length;
             const bypass = routeTable.get(nearest).length + length;
-            routeTable.set(name, {
-              length: Math.min(direct, bypass),
-              by: bypass < direct ? nearest : name
-            });
+            if (bypass < direct) {
+              routeTable.set(name, {
+                length: bypass,
+                prev: nearest
+              });
+            }
           }
         }
+      }
+      for (const [name, {length, prev}] of routeTable) {
+        let by;
+        if (prev === node.name) {
+          by = name;
+        } else {
+          by = routeTable.get(prev).by;
+        }
+        routeTable.set(name, {
+          length,
+          by
+        });
       }
       node.send(new Message(Message.ROUTE_UPDATE, node.info.name, Array.from(routeTable)));
       if (!routeTable.size) {
