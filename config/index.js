@@ -1,4 +1,4 @@
 module.exports = {
   port: 0, // random available port
-  algo: 'CentralizedLinkState'
+  algo: 'LinkState'
 };
