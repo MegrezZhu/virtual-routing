@@ -1,6 +1,7 @@
 const Base = require('./Base');
 const Router = require('../lib/Router');
 const Message = require('../lib/Message');
+const io = require('../lib/IOInterface');
 
 class LinkState extends Base {
   constructor () {
@@ -24,25 +25,27 @@ class LinkState extends Base {
   }
 
   _attachHooks () {
+    setInterval(this.broadcastLinkState.bind(this), 5000);
     this.router.on(Router.NEW_NEIGHBOR, node => {
       this.linkState.get(this.router.name).set(node.info.name, node.info.cost);
-      this.broadcastLinkState();
       this._calculate();
       node.on(Message.LINK_STATE, msg => {
         // 如果这个广播从来没有收到过
         if (msg.header.path.indexOf(this.router.name) === msg.header.path.length - 1) {
-          this._applyLinkState(msg.data);
-          this._deleteUnRefNode();
+          const oldMap = this.linkState.get(msg.header.from);
+          const newMap = new Map(msg.data);
+          if (this._isLinkStateChange(oldMap, newMap)) {
+            io.result('Link state change, start algorithm');
+            this.linkState.set(msg.header.from, newMap);
+            this._calculate();
+          }
           this.router.broadcast(msg);
-          this._calculate();
         }
       });
     });
     this.router.on(Router.NEIGHBOR_GONE, node => {
       this.linkState.get(this.router.name).delete(node.info.name);
       this.linkState.delete(node.info.name);
-      this._deleteUnRefNode();
-      this.broadcastLinkState();
       this._calculate();
     });
   }
@@ -58,14 +61,14 @@ class LinkState extends Base {
     for (const name of queue) {
       this.routeTable.set(name, {
         length: Infinity,
-        by: null
+        prev: null
       });
     }
     for (const [name, length] of this.linkState.get(origin)) {
-      if (!queue.has(name)) return; // 链路状态不稳定
+      if (!queue.has(name)) return io.error('Unstable links, cancel algorithm');
       this.routeTable.set(name, {
         length,
-        by: name
+        prev: origin
       });
     }
     while (queue.size) {
@@ -80,56 +83,58 @@ class LinkState extends Base {
         }
       }
       queue.delete(nearest);
+      if (!nearest) {
+        this.routeTable.clear();
+        break;
+      }
       for (const [name, length] of this.linkState.get(nearest)) {
         if (queue.has(name)) {
           const direct = this.routeTable.get(name).length;
           const bypass = this.routeTable.get(nearest).length + length;
-          this.routeTable.set(name, {
-            length: Math.min(direct, bypass),
-            by: bypass < direct ? nearest : name
-          });
+          if (bypass < direct) {
+            this.routeTable.set(name, {
+              length: bypass,
+              prev: nearest
+            });
+          }
         }
       }
     }
-  }
-  _deleteUnRefNode () {
-    // 所有记录过的节点
-    const keys = [...this.linkState.keys()];
-    // 所有被引用（有邻居）的节点
-    const hasRef = [];
-    for (const val of this.linkState.values()) {
-      hasRef.push(...val.keys());
+    for (let [name, {length, prev}] of this.routeTable) {
+      let by = name;
+      while (true) {
+        if (prev === origin) break;
+        const prevRule = this.routeTable.get(prev);
+        if (prevRule.by) {
+          by = prevRule.by;
+          break;
+        }
+        by = prev;
+        prev = prevRule.prev;
+      }
+      this.routeTable.set(name, {
+        length,
+        by
+      });
     }
-    // 如果有节点在记录中，但是已经没有邻居，则判断这个节点消失了
-    const leaveNodes = new Set(keys.filter(x => !hasRef.includes(x)));
-    leaveNodes.delete(this.router.name);
-    leaveNodes.forEach(node => this.linkState.delete(node));
+    io.result('Update route table');
   }
   broadcastLinkState () {
-    const result = [];
-    for (const [name, ls] of this.linkState) {
-      result.push({
-        name,
-        linkState: Array.from(ls.entries())
-      });
-    }
-    this.router.broadcast(new Message(Message.LINK_STATE, null, result));
+    this.router.broadcast(new Message(Message.LINK_STATE, null, Array.from(this.linkState.get(this.router.name))));
   }
-  _serializeLinkState () {
-    const result = [];
-    for (const [name, ls] of this.linkState) {
-      result.push({
-        name,
-        linkState: Array.from(ls.entries())
-      });
+  _isLinkStateChange (oldMap, newMap) {
+    if (oldMap === newMap) return false;
+    if (!oldMap || !newMap) return true;
+    if (Array.from(oldMap.keys()).filter(x => !newMap.has(x)).length) {
+      return true;
     }
-    return result;
-  }
-  _applyLinkState (ls) {
-    for (const {name, linkState} of ls) {
-      if (name === this.router.name) continue;
-      this.linkState.set(name, new Map(linkState));
+    if (Array.from(newMap.keys()).filter(x => !oldMap.has(x)).length) {
+      return true;
     }
+    for (const [key, value] of oldMap) {
+      if (newMap.get(key) !== value) return true;
+    }
+    return false;
   }
 };
 

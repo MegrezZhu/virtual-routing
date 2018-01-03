@@ -92,7 +92,7 @@ class CentralizedLinkState extends Base {
           if (this._isLinkStateChange(oldMap, newMap)) {
             io.result(`Link State Change`);
             this.nodes.add(node);
-            this.linkState.set(node.name, new Map(msg.data));
+            this.linkState.set(node.name, newMap);
             this._broadcastLinkState();
           }
         });
@@ -126,7 +126,7 @@ class CentralizedLinkState extends Base {
         if (!queue.has(name)) return io.error('Unstable links, cancel broadcast');
         routeTable.set(name, {
           length,
-          prev: node.name
+          prev: origin
         });
       }
 
@@ -179,18 +179,18 @@ class CentralizedLinkState extends Base {
     }
     io.result('Update route table');
   }
-  _deleteUnRefNode () {
-    // 所有记录过的节点
-    const keys = [...this.linkState.keys()];
-    // 所有被引用（有邻居）的节点
-    const hasRef = [];
-    for (const val of this.linkState.values()) {
-      hasRef.push(...val.keys());
-    }
-    // 如果有节点在记录中，但是已经不是任何人的邻居，则判断这个节点消失了
-    const leaveNodes = new Set(keys.filter(x => !hasRef.includes(x)));
-    leaveNodes.forEach(node => this.linkState.delete(node));
-  }
+  // _deleteUnRefNode () {
+  //   // 所有记录过的节点
+  //   const keys = [...this.linkState.keys()];
+  //   // 所有被引用（有邻居）的节点
+  //   const hasRef = [];
+  //   for (const val of this.linkState.values()) {
+  //     hasRef.push(...val.keys());
+  //   }
+  //   // 如果有节点在记录中，但是已经不是任何人的邻居，则判断这个节点消失了
+  //   const leaveNodes = new Set(keys.filter(x => !hasRef.includes(x)));
+  //   leaveNodes.forEach(node => this.linkState.delete(node));
+  // }
   _isLinkStateChange (oldMap, newMap) {
     if (oldMap === newMap) return false;
     if (!oldMap || !newMap) return true;
