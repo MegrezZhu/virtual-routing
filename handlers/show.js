@@ -21,7 +21,7 @@ module.exports = args => {
     case 'route':
       console.log(`\tname\tdistance\tnext_hop`);
       for (const [name, { length, by }] of router.algo.getRoute().entries()) {
-        console.log(`\t${name}\t${length === Infinity ? 'Inf' : length}\t\t${by}`);
+        console.log(`\t${name}\t${length === 16 ? 'Inf' : length}\t\t${by}`);
       }
       break;
     default:

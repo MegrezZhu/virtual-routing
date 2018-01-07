@@ -46,7 +46,7 @@ class DistanceVector extends Base {
 
     this.router.on(Router.NEIGHBOR_GONE, node => {
       this.nodes.delete(node.info.name);
-      this.route.setEdge(node.info.name, Infinity);
+      this.route.setEdge(node.info.name, 16);
     });
 
     this.route.on(Route.ROUTE_CHANGED, () => {
@@ -118,7 +118,7 @@ class Route extends EventEmitter {
   setVector (name, vector) {
     if (!(vector instanceof Map)) {
       // plain Object to Map, converting "null" to "Infinity"
-      vector = new Map(Array.from(Object.entries(vector)).map(([name, length]) => ([name, length || Infinity])));
+      vector = new Map(Array.from(Object.entries(vector)).map(([name, length]) => ([name, length || 16])));
     }
 
     this.vectors.set(name, vector);
@@ -133,7 +133,7 @@ class Route extends EventEmitter {
     let result = new Map(Array.from(this.edges.entries(), ([name, length]) => [name, { length, by: name }]));
 
     for (const [byName, vector] of this.vectors.entries()) {
-      const length1 = this.edges.get(byName) || Infinity;
+      const length1 = this.edges.get(byName) || 16;
 
       for (const [toName, length2] of vector.entries()) {
         if (toName === this.name) continue;
@@ -149,7 +149,7 @@ class Route extends EventEmitter {
       }
     }
 
-    result = new Map(Array.from(result.entries()).filter(([, {length}]) => length !== Infinity));
+    result = new Map(Array.from(result.entries()).filter(([, {length}]) => length !== 16));
     if (this._compare(this.routeInfo, result)) {
       this.routeInfo = result;
       this.emit(Route.ROUTE_CHANGED);
@@ -191,7 +191,7 @@ class Route extends EventEmitter {
   createVectorTo (name) {
     const result = {};
     for (const [_name, { length, by }] of this.routeInfo.entries()) {
-      result[_name] = by === name ? Infinity : length;
+      result[_name] = by === name ? 16 : length;
     }
     return result;
   }
