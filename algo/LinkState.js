@@ -13,6 +13,7 @@ class LinkState extends Base {
     this.router = router; // router instance
     this.linkState = new Map(); // Map: name to Map (name to length)
     this.routeTable = new Map(); // name to {length, by}
+    this.clearTimeoutIds = new Map();
 
     // init with self
     this.linkState.set(this.router.name, new Map(Array.from(this.router.neighbors.entries()).map(([name, node]) => [name, node.info.cost])));
@@ -25,13 +26,14 @@ class LinkState extends Base {
   }
 
   _attachHooks () {
-    setInterval(this.broadcastLinkState.bind(this), 5000);
+    setInterval(this.broadcastLinkState.bind(this), LinkState.BROADCAST_INTERVAL);
     this.router.on(Router.NEW_NEIGHBOR, node => {
       this.linkState.get(this.router.name).set(node.info.name, node.info.cost);
       this._calculate();
       node.on(Message.LINK_STATE, msg => {
         // 如果这个广播从来没有收到过
         if (msg.header.path.indexOf(this.router.name) === msg.header.path.length - 1) {
+          this._updateClearTimeout(msg.header.from);
           const oldMap = this.linkState.get(msg.header.from);
           const newMap = new Map(msg.data);
           if (this._isLinkStateChange(oldMap, newMap)) {
@@ -122,6 +124,14 @@ class LinkState extends Base {
   broadcastLinkState () {
     this.router.broadcast(new Message(Message.LINK_STATE, null, Array.from(this.linkState.get(this.router.name))));
   }
+  _updateClearTimeout (name) {
+    clearTimeout(this.clearTimeoutIds.get(name));
+    const id = setTimeout(() => {
+      this.linkState.delete(name);
+      this._calculate();
+    }, LinkState.BROADCAST_INTERVAL * 2);
+    this.clearTimeoutIds.set(name, id);
+  }
   _isLinkStateChange (oldMap, newMap) {
     if (oldMap === newMap) return false;
     if (!oldMap || !newMap) return true;
@@ -137,5 +147,7 @@ class LinkState extends Base {
     return false;
   }
 };
+
+LinkState.BROADCAST_INTERVAL = 5000;
 
 module.exports = LinkState;
