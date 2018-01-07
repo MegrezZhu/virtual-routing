@@ -44,7 +44,7 @@ class DistanceVector extends Base {
       });
     });
 
-    this.router.server.on(Server.LOST_CONNECTION, node => {
+    this.router.on(Router.NEIGHBOR_GONE, node => {
       this.nodes.delete(node.info.name);
       this.route.setEdge(node.info.name, Infinity);
     });
