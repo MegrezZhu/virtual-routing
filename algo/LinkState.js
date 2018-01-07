@@ -1,12 +1,9 @@
-const Base = require('./Base');
 const Router = require('../lib/Router');
 const Message = require('../lib/Message');
 const io = require('../lib/IOInterface');
 
-class LinkState extends Base {
+class LinkState {
   constructor () {
-    super();
-
     this.name = 'LinkState';
   }
   init (router) {

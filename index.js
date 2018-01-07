@@ -22,11 +22,12 @@ startup() // start the application
 
 async function startup () {
   const name = await promptName();
+  const algoName = await promptAlgo();
   console.log(' ---- use "help" to see more commands ----');
   io.registInputHandler(handleInput);
 
   await router.init(name, port);
-  const Algo = algorithms[config.algo];
+  const Algo = algorithms[algoName];
   await router.installAlgo(new Algo());
 
   Message.init(router.name);
@@ -43,6 +44,16 @@ async function promptName () {
     name: 'name',
     message: 'your name',
     default: crypto.randomBytes(3).toString('hex').toUpperCase()
+  }]);
+  return name;
+}
+
+async function promptAlgo () {
+  const {name} = await inq.prompt([{
+    name: 'name',
+    message: 'Please select algorithm',
+    type: 'list',
+    choices: [...Object.keys(algorithms)]
   }]);
   return name;
 }

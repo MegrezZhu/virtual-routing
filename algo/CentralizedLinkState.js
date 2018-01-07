@@ -1,5 +1,4 @@
 const inq = require('inquirer');
-const Base = require('./Base');
 const Router = require('../lib/Router');
 const Message = require('../lib/Message');
 const Server = require('../lib/Server');
@@ -8,10 +7,8 @@ const io = require('../lib/IOInterface');
 
 const MASTER_NAME = 'MASTER';
 
-class CentralizedLinkState extends Base {
+class CentralizedLinkState {
   constructor () {
-    super();
-
     this.name = 'CentralizedLinkState';
   }
   async init (router) {

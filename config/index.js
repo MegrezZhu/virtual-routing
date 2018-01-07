@@ -1,4 +1,3 @@
 module.exports = {
-  port: 0, // random available port
-  algo: 'DistanceVector'
+  port: 0 // random available port
 };

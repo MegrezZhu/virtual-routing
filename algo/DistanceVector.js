@@ -1,15 +1,11 @@
 const { EventEmitter } = require('events');
-const Base = require('./Base');
 const Router = require('../lib/Router');
 const Message = require('../lib/Message');
 const Node = require('../lib/Node');
-const Server = require('../lib/Server');
 const io = require('../lib/IOInterface');
 
-class DistanceVector extends Base {
+class DistanceVector {
   constructor () {
-    super();
-
     this.name = 'DistanceVector';
   }
 
